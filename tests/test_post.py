@@ -1,8 +1,6 @@
 import pytest
-
-from django.core.paginator import Paginator, Page
-from django.contrib.auth import get_user_model
 from django import forms
+from django.contrib.auth import get_user_model
 
 from posts.models import Post
 
