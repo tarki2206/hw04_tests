@@ -3,11 +3,12 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from posts.models import Post
+from posts.forms import PostForm
 
 
-def get_field_context(context, field_type):
+def get_field_from_context(context, field_type):
     for field in context.keys():
-        if field not in ('user', 'request') and type(context[field]) == field_type:
+        if field not in ('user', 'request') and isinstance(context[field], field_type):
             return context[field]
     return
 
@@ -26,12 +27,12 @@ class TestPostView:
             'Страница `/<username>/<post_id>/` не найдена, проверьте этот адрес в *urls.py*'
         )
 
-        profile_context = get_field_context(response.context, get_user_model())
+        profile_context = get_field_from_context(response.context, get_user_model())
         assert profile_context is not None, (
             'Проверьте, что передали автора в контекст страницы `/<username>/<post_id>/`'
         )
 
-        post_context = get_field_context(response.context, Post)
+        post_context = get_field_from_context(response.context, Post)
         assert post_context is not None, (
             'Проверьте, что передали статью в контекст страницы `/<username>/<post_id>/` типа `Post`'
         )
@@ -71,9 +72,10 @@ class TestPostEditView:
             'Страница `/<username>/<post_id>/edit/` не найдена, проверьте этот адрес в *urls.py*'
         )
 
-        post_context = get_field_context(response.context, Post)
-        assert post_context is not None, (
-            'Проверьте, что передали статью в контекст страницы `/<username>/<post_id>/edit/` типа `Post`'
+        post_context = get_field_from_context(response.context, Post)
+        postform_context = get_field_from_context(response.context, PostForm)
+        assert any([post_context, postform_context]) is not None, (
+            'Проверьте, что передали статью в контекст страницы `/<username>/<post_id>/edit/` типа `Post` или `PostForm`'
         )
 
         assert 'form' in response.context, (
@@ -123,7 +125,7 @@ class TestPostEditView:
         )
         post = Post.objects.filter(author=post_with_group.author, text=text, group=post_with_group.group).first()
         assert post is not None, (
-            'Проверьте, что вы изминили пост при отправки формы на странице `/<username>/<post_id>/edit/`'
+            'Проверьте, что вы изменили пост при отправки формы на странице `/<username>/<post_id>/edit/`'
         )
         assert response.url.startswith(f'/{post_with_group.author.username}/{post_with_group.id}'), (
             'Проверьте, что перенаправляете на страницу поста `/<username>/<post_id>/`'

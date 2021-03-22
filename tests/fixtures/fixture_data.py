@@ -17,3 +17,7 @@ def group():
 def post_with_group(user, group):
     from posts.models import Post
     return Post.objects.create(text='Тестовый пост 2', author=user, group=group)
+
+@pytest.fixture
+def few_posts_with_group(user, group):
+    return mixer.cycle(20).blend(Post, author=user, group=group)
