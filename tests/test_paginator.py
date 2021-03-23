@@ -20,11 +20,11 @@ class TestGroupPaginatorView:
 
     def test_group_paginator_view_get(self, client, few_posts_with_group):
         try:
-            response = client.get(f'/group/{few_posts_with_group[0].group.slug}')
+            response = client.get(f'/group/{few_posts_with_group.group.slug}')
         except Exception as e:
             assert False, f'''Страница `/group/<slug>/` работает неправильно. Ошибка: `{e}`'''
         if response.status_code in (301, 302):
-            response = client.get(f'/group/{few_posts_with_group[0].group.slug}/')
+            response = client.get(f'/group/{few_posts_with_group.group.slug}/')
         assert response.status_code != 404, 'Страница `/group/<slug>/` не найдена, проверьте этот адрес в *urls.py*'
         assert 'paginator' in response.context, (
             'Проверьте, что передали переменную `paginator` в контекст страницы `/group/<slug>/`'
