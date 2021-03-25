@@ -203,7 +203,7 @@ class TestGroupView:
         assert re.search(
             r'<\s*h1\s*>\s*' + group.title + r'\s*<\s*\/h1\s*>',
             html
-        ), 'Отредактируйте HTML-шаблон, не найден заголовок группы `<h1>{{ название_группы }}</h1>`'
+        ), 'Отредактируйте HTML-шаблон, не найден заголовок группы `{% block header %}{{ название_группы }}{% endblock %}`'
         assert re.search(
             r'<\s*p\s*>\s*' + group.description + r'\s*<\s*\/p\s*>',
             html
