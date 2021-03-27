@@ -5,12 +5,7 @@ from django.contrib.auth import get_user_model
 from posts.models import Post
 from posts.forms import PostForm
 
-
-def get_field_from_context(context, field_type):
-    for field in context.keys():
-        if field not in ('user', 'request') and isinstance(context[field], field_type):
-            return context[field]
-    return
+from tests.utils import get_field_from_context
 
 
 class TestPostView:
