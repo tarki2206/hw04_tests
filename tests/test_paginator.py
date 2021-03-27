@@ -26,9 +26,6 @@ class TestGroupPaginatorView:
         if response.status_code in (301, 302):
             response = client.get(f'/group/{few_posts_with_group.group.slug}/')
         assert response.status_code != 404, 'Страница `/group/<slug>/` не найдена, проверьте этот адрес в *urls.py*'
-        assert 'paginator' in response.context, (
-            'Проверьте, что передали переменную `paginator` в контекст страницы `/group/<slug>/`'
-        )
         assert isinstance(response.context['page'].paginator, Paginator), (
             'Проверьте, что переменная `paginator` на странице `/group/<slug>/` типа `Paginator`'
         )
@@ -49,9 +46,6 @@ class TestGroupPaginatorView:
     def test_index_paginator_view_get(self, client, few_posts_with_group):
         response = client.get('/')
         assert response.status_code != 404, 'Страница `/` не найдена, проверьте этот адрес в *urls.py*'
-        assert 'paginator' in response.context, (
-            'Проверьте, что объект `page` страницы `/` содержит `paginator`'
-        )
         assert isinstance(response.context['page'].paginator, Paginator), (
             'Проверьте, что переменная `paginator` объекта `page` на странице `/` типа `Paginator`'
         )
