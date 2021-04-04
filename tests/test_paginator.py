@@ -32,9 +32,6 @@ class TestGroupPaginatorView:
 
     def test_index_paginator_not_in_view_context(self, client, few_posts_with_group):
         response = client.get('/')
-        assert 'paginator' not in response.context, (
-            'Проверьте, что объект `page` страницы `/` не содержит `paginator` в контексте'
-        )
         assert isinstance(response.context['page'].paginator, Paginator), (
             'Проверьте, что переменная `paginator` объекта `page` на странице `/` типа `Paginator`'
         )
@@ -51,9 +48,6 @@ class TestGroupPaginatorView:
 
     def test_profile_paginator_view(self, client, few_posts_with_group):
         response = client.get(f'/{few_posts_with_group.author.username}/')
-        assert 'paginator' not in response.context, (
-            'Проверьте, что объект `page` страницы `/` не содержит `paginator` в контексте'
-        )
         assert isinstance(response.context['page'].paginator, Paginator), (
             'Проверьте, что переменная `paginator` объекта `page` на странице `/` типа `Paginator`'
         )
