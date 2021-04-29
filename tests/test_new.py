@@ -34,7 +34,7 @@ class TestNewView:
             'Проверьте, что в форме `form` на странице `/new/` поле `text` типа `CharField`'
         )
         assert response.context['form'].fields['text'].required, (
-            'Проверьте, что в форме `form` на странице `/new/` поле `group` обязательно'
+            'Проверьте, что в форме `form` на странице `/new/` поле `text` обязательно'
         )
 
     @pytest.mark.django_db(transaction=True)
