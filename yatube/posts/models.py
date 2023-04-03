@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+SYMBOLS_LIMIT = 15
+
 
 class Group(models.Model):
     title = models.CharField(verbose_name='title', max_length=200)
@@ -28,7 +30,7 @@ class Post(models.Model):
                               related_name='posts')
 
     def __str__(self):
-        return self.text[:15]
+        return self.text[:SYMBOLS_LIMIT]
 
     class Meta:
         ordering = ['-pub_date']
