@@ -107,3 +107,26 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True)
         self.assertRedirects(response, '/auth/login/?next=/posts/1/edit/')
+
+    def test_form_with_wrong_data(self):
+        form_data = {
+            'text': ' ',
+            'group': self.group.id
+        }
+        response = self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_form_edit_with_wrong_data(self):
+        form_data = {
+            'text': ' ',
+            'group': self.group.id
+        }
+        response = self.authorized_client.post(
+            reverse('posts:post_edit',
+                    kwargs={'post_id': self.post.pk}),
+            data=form_data, follow=True)
+        self.assertEqual(response.status_code, 200)
