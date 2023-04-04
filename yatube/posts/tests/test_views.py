@@ -27,9 +27,6 @@ class PostViewTests(TestCase):
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-        self.authorized_client_2 = Client()
-        self.authorized_client_2.force_login(self.user_2)
-
         self.post1 = Post.objects.create(
             text='test_text_2',
             author=self.user_2,
@@ -66,11 +63,8 @@ class PostViewTests(TestCase):
 
     def test_index_page_show_correct_context(self):
         response = self.authorized_client.get(reverse('posts:main_posts'))
-        ex_context = {
-            'user': {self.user},
-            'page_obj': None
-        }
-        for name, value in ex_context.items():
+        ex_context = ['user', 'page_obj']
+        for name in ex_context:
             self.assertIn(name, response.context)
         post_context = response.context['page_obj'][0]
         self.assertEqual(post_context.text, self.post.text)
@@ -87,37 +81,69 @@ class PostViewTests(TestCase):
         }
         for name, value in ex_context.items():
             self.assertIn(name, response.context)
-        print(response.context)
         post_context = response.context['page_obj'][0]
         self.assertEqual(post_context.author, self.post.author)
         self.assertEqual(post_context.text, self.post.text)
         self.assertEqual(post_context.group, self.post.group)
 
-    def test_new_post_in_group_main_page(self):
+    def test_new_post_on_main_page(self):
         form_data = {
             'text': 'new_post',
             'group': self.group.id
         }
+        self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data)
+        new_post = Post.objects.latest('id')
+        response = self.authorized_client.get(
+            reverse('posts:main_posts'))
+        last_post = response.context.get('page_obj')[0]
+        self.assertEqual(last_post, new_post)
 
-        url_name_list = {
-            reverse('posts:main_posts'): self.assertEqual,
-            reverse('posts:group_list',
-                    kwargs={'slug': self.group.slug}): self.assertEqual,
-            reverse('posts:profile',
-                    kwargs={'username': self.user}): self.assertEqual,
-            reverse('posts:group_list',
-                    kwargs={'slug': self.group_2.slug}): self.assertNotEqual
+    def test_new_post_on_group_page(self):
+        form_data = {
+            'text': 'new_post',
+            'group': self.group.id
         }
         self.authorized_client.post(
             reverse('posts:post_create'),
-            data=form_data
-        )
+            data=form_data)
         new_post = Post.objects.latest('id')
-        for address, method in url_name_list.items():
-            with self.subTest(address=address):
-                response = self.authorized_client.get(address)
-                last_post = response.context.get('page_obj')[0]
-                method(last_post, new_post)
+        response = self.authorized_client.get(
+            reverse('posts:group_list',
+                    kwargs={'slug': self.group.slug}))
+        last_post = response.context.get('page_obj')[0]
+        self.assertEqual(last_post, new_post)
+
+    def test_new_post_on_profile_page(self):
+        form_data = {
+            'text': 'new_post',
+            'group': self.group.id
+        }
+        self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data)
+        new_post = Post.objects.latest('id')
+        response = self.authorized_client.get(
+            reverse('posts:profile',
+                    kwargs={'username': self.user}))
+        last_post = response.context.get('page_obj')[0]
+        self.assertEqual(last_post, new_post)
+
+    def test_new_post_doesnt_show_on_dif_group(self):
+        form_data = {
+            'text': 'new_post',
+            'group': self.group.id
+        }
+        self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data)
+        new_post = Post.objects.latest('id')
+        response = self.authorized_client.get(
+            reverse('posts:group_list',
+                    kwargs={'slug': self.group_2.slug}))
+        last_post = response.context.get('page_obj')[0]
+        self.assertNotEqual(last_post, new_post)
 
     def test_profile_correct_context(self):
         response = self.authorized_client.get(reverse

@@ -1,9 +1,9 @@
-from .forms import PostForm
-from .models import Post, Group, User
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
+
+from .forms import PostForm
+from .models import Post, Group, User
 
 
 POST_QUANTITY = 10

@@ -16,7 +16,7 @@ class Group(models.Model):
 
 
 class Post(models.Model):
-    text = models.TextField(verbose_name='content')
+    text = models.TextField(verbose_name='content', help_text='just text')
     pub_date = models.DateTimeField(verbose_name='date', auto_now_add=True)
     author = models.ForeignKey(User,
                                verbose_name='author',
@@ -27,7 +27,8 @@ class Post(models.Model):
                               blank=True,
                               null=True,
                               on_delete=models.SET_NULL,
-                              related_name='posts')
+                              related_name='posts',
+                              help_text='foreign key field')
 
     def __str__(self):
         return self.text[:SYMBOLS_LIMIT]
