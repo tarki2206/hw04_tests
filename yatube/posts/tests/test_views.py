@@ -74,12 +74,8 @@ class PostViewTests(TestCase):
                     (reverse
                      ('posts:group_list',
                       kwargs={'slug': self.group.slug})))
-        ex_context = {
-            'user': {self.user},
-            'group': {self.post.group},
-            'page_obj': None
-        }
-        for name, value in ex_context.items():
+        ex_context = ['user', 'group', 'page_obj']
+        for name in ex_context:
             self.assertIn(name, response.context)
         post_context = response.context['page_obj'][0]
         self.assertEqual(post_context.author, self.post.author)
@@ -149,11 +145,8 @@ class PostViewTests(TestCase):
         response = self.authorized_client.get(reverse
                                               ('posts:profile',
                                                kwargs={'username': self.user}))
-        ex_context = {
-            'username': {self.user},
-            'page_obj': None
-        }
-        for name, value in ex_context.items():
+        ex_context = ['username', 'page_obj']
+        for name in ex_context:
             self.assertIn(name, response.context)
             post_context = response.context['page_obj'][0]
             author = post_context.author

@@ -18,6 +18,7 @@ class PostFormTests(TestCase):
         )
 
     def setUp(self):
+        self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         self.post = Post.objects.create(
@@ -82,3 +83,27 @@ class PostFormTests(TestCase):
         )
         self.assertEqual(modified_post.group.title,
                          'Test group2')
+
+    def test_create_post_form_guest(self):
+
+        form_data = {
+            'text': 'Post2',
+            'group': self.group.id
+        }
+        response = self.guest_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(response, '/auth/login/?next=/create/')
+
+    def test_edit_post_form_guest(self):
+        form_data = {
+            'text': 'new post',
+            'group': self.group_2.id
+        }
+        response = self.guest_client.post(
+            reverse('posts:post_edit', kwargs={'post_id': self.post.pk}),
+            data=form_data,
+            follow=True)
+        self.assertRedirects(response, '/auth/login/?next=/posts/1/edit/')
