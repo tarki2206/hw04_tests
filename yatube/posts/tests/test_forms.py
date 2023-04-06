@@ -1,6 +1,12 @@
 from django.test import Client, TestCase
 from django.urls import reverse
 from ..models import Group, Post, User
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
+import shutil
+import tempfile
+
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
 class PostFormTests(TestCase):

@@ -1,12 +1,20 @@
 import datetime
+import shutil
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+
+from ..forms import PostForm
 from ..models import Post, Group
 from django import forms
+from django.conf import settings
+import tempfile
+from django.db.models.fields.files import ImageFieldFile
 
 User = get_user_model()
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
 class PostViewTests(TestCase):
@@ -255,3 +263,88 @@ class PostViewPaginatorTests(TestCase):
                     kwargs={'username': self.user}) + '?page=2')
         self.assertEqual(len(response.context['page_obj']),
                          POST_QUANTITY_ON_SECOND_PAGE)
+
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
+class PostImageTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='author')
+        cls.group = Group.objects.create(
+            title='group',
+            slug='group_1'
+        )
+        cls.gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        cls.uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=cls.gif,
+            content_type='image/gif'
+        )
+
+    def setUp(self):
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+        self.post = Post.objects.create(
+            text='Test top',
+            author=self.user,
+            group=self.group,
+            image=self.uploaded
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def test_contex_include_image_on_main(self):
+        response = self.authorized_client.get(reverse('posts:main_posts'))
+        image = response.context['page_obj'].object_list
+        image_data = image[0].image.read()
+        self.assertEqual(image_data, self.gif)
+
+    def test_contex_include_image_on_post_detail(self):
+        response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': self.post.id}))
+        post = response.context['post']
+        image_data = post.image.read()
+        self.assertEqual(image_data, self.gif)
+
+    def test_contex_include_image_on_profile(self):
+        response = self.authorized_client.get(reverse('posts:profile', kwargs={'username': self.user}))
+        image_con = response.context['page_obj'].object_list
+        image_data = image_con[0].image.read()
+        self.assertEqual(image_data, self.gif)
+
+    def test_contex_include_image_on_group(self):
+        response = self.authorized_client.get(reverse
+                     ('posts:group_list',
+                      kwargs={'slug': self.group.slug}))
+        image_con = response.context['page_obj'].object_list
+        image_data = image_con[0].image.read()
+        self.assertEqual(image_data, self.gif)
+
+    def test_create_post_with_image_field(self):
+        response = self.authorized_client.get(reverse('posts:post_create'))
+        form_field = response.context['form'].fields['image']
+        self.assertIsInstance(form_field, forms.fields.ImageField)
+
+    def test_edit_post_with_image_field(self):
+        response = self.authorized_client.get(
+            reverse
+            ('posts:post_edit',
+             kwargs={'post_id': self.post.pk}))
+        form_field = response.context['form'].fields['image']
+        self.assertIsInstance(form_field, forms.fields.ImageField)
+
+
+
+
+
+
