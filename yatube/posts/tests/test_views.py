@@ -9,7 +9,7 @@ from django.urls import reverse
 from django import forms
 from django.conf import settings
 
-from ..models import Post, Group, Comment
+from ..models import Post, Group, Comment, Follow
 
 
 User = get_user_model()
@@ -32,6 +32,7 @@ class PostViewTests(TestCase):
         )
 
     def setUp(self):
+        self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         self.post1 = Post.objects.create(
@@ -354,3 +355,38 @@ class PostImageTests(TestCase):
              kwargs={'post_id': self.post.pk}))
         form_field = response.context['form'].fields['image']
         self.assertIsInstance(form_field, forms.fields.ImageField)
+
+
+class FollowViewTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='author')
+        cls.user_2 = User.objects.create_user(username='author_2')
+
+    def setUp(self):
+        self.guest_client = Client()
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+        self.authorized_client.force_login(self.user_2)
+        self.post = Post.objects.create(
+            text='12345',
+            author=self.user,
+        )
+
+    def test_user_can_follow_other_user(self):
+        followers_count = Follow.objects.count()
+        self.authorized_client.get(
+            reverse('posts:profile_follow', args={self.user}))
+        self.assertEqual(Follow.objects.count(), followers_count + 1)
+        last_follow = Follow.objects.latest('id')
+        self.assertEqual(last_follow.author, self.user)
+        self.assertEqual(last_follow.user, self.user_2)
+
+    def test_post_after_following(self):
+        self.authorized_client.get(
+            reverse('posts:profile_follow', args={self.user}))
+        response = self.authorized_client.get(
+            reverse('posts:follow_index'))
+        post_follow = response.context['page_obj'][0]
+        self.assertEqual(post_follow, self.post)
