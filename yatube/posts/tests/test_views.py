@@ -1,17 +1,16 @@
 import datetime
 import shutil
+import tempfile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-
-from ..forms import PostForm
-from ..models import Post, Group
 from django import forms
 from django.conf import settings
-import tempfile
-from django.db.models.fields.files import ImageFieldFile
+
+from ..models import Post, Group, Comment
+
 
 User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -196,6 +195,18 @@ class PostViewTests(TestCase):
                 form_field = response.context['form'].fields[value]
             self.assertIsInstance(form_field, expected)
 
+    def test_comments_only_for_auth_user(self):
+        form_data = {'text': 'Test text5'}
+        response = self.authorized_client.post(reverse(
+            'posts:post_detail', kwargs={'post_id': self.post.id}), data=form_data, follow=True)
+        self.assertContains(response, 'Test text5')
+
+    def test_comments_not_for_guest_user(self):
+        form_data = {'text': 'Test text6'}
+        response = self.guest_client.post(reverse(
+            'posts:post_detail', kwargs={'post_id': self.post.id}), data=form_data, follow=True)
+        self.assertNotContains(response, 'Test text6')
+
 
 POSTS_QUANTITY = 15
 POSTS_QUANTITY_ON_FIRST_PAGE = 10
@@ -311,21 +322,22 @@ class PostImageTests(TestCase):
         self.assertEqual(image_data, self.gif)
 
     def test_contex_include_image_on_post_detail(self):
-        response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': self.post.id}))
+        response = self.authorized_client.get(reverse(
+            'posts:post_detail', kwargs={'post_id': self.post.id}))
         post = response.context['post']
         image_data = post.image.read()
         self.assertEqual(image_data, self.gif)
 
     def test_contex_include_image_on_profile(self):
-        response = self.authorized_client.get(reverse('posts:profile', kwargs={'username': self.user}))
+        response = self.authorized_client.get(reverse(
+            'posts:profile', kwargs={'username': self.user}))
         image_con = response.context['page_obj'].object_list
         image_data = image_con[0].image.read()
         self.assertEqual(image_data, self.gif)
 
     def test_contex_include_image_on_group(self):
-        response = self.authorized_client.get(reverse
-                     ('posts:group_list',
-                      kwargs={'slug': self.group.slug}))
+        response = self.authorized_client.get(reverse(
+            'posts:group_list', kwargs={'slug': self.group.slug}))
         image_con = response.context['page_obj'].object_list
         image_data = image_con[0].image.read()
         self.assertEqual(image_data, self.gif)
@@ -342,9 +354,3 @@ class PostImageTests(TestCase):
              kwargs={'post_id': self.post.pk}))
         form_field = response.context['form'].fields['image']
         self.assertIsInstance(form_field, forms.fields.ImageField)
-
-
-
-
-
-

@@ -3,12 +3,28 @@
     {% block title %}
   <title> post.author </title>
       {% endblock %}
+  {% csrf_token %}
 {% block content %}
   <body>
     <main>
       <div class="container py-5">
         <h1>Все посты пользователя: {{ username }} </h1>
         <h3>Всего постов: {{ total_num_posts }} </h3>
+          {% if following %}
+    <a
+      class="btn btn-lg btn-light"
+      href="{% url 'posts:profile_unfollow' username %}" role="button"
+    >
+      Отписаться
+    </a>
+  {% else %}
+      <a
+        class="btn btn-lg btn-primary"
+        href="{% url 'posts:profile_follow' username %}" role="button"
+      >
+        Подписаться
+      </a>
+   {% endif %}
         </div>
         {% for post in page_obj %}
           <ul>
@@ -29,8 +45,9 @@
           </p>
 
           <br>
-
+        {% if post.group %}
         <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
+        {% endif %}
 
       <hr>
       {% endfor %}
